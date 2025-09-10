@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDVIEW - Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            position: relative;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .price-display {
+            position: absolute;
+            top: 10px;
+            left: 200px;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 0 20px;
+            color: red;
+        }
+
+        .price-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .fuel-type {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .price-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: red;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+        }
+
+
+        .price-divider {
+            width: 2px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .no-price {
+            text-align: center;
+            padding: 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .last-update {
+            display: none;
+        }
+
+        @media (max-width: 380px) {
+            .price-value {
+                font-size: 28px;
+            }
+            
+            .fuel-type {
+                font-size: 12px;
+            }
+
+            .price-display {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="priceDisplay" class="price-display loading">
+            <div class="no-price">Carregando preços...</div>
+        </div>
+        
+        <video width="400" height="400" controls autoplay loop>
+            <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
+            Seu navegador não suporta vídeo HTML5.
+        </video>
+    </div>
+
+    <script>
+        function formatPrice(value) {
+            return value.toFixed(2);
+        }
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp);
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        async function loadPrices() {
+            try {
+                const response = await fetch('http://192.168.15.9:3000/get-price');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const priceDisplay = document.getElementById('priceDisplay');
+                    
+                    priceDisplay.innerHTML = `
+                        <div class="price-item">
+                            <div class="price-value">${formatPrice(data.etanol)}</div>
+                        </div>
+                        <br>
+                        <div class="price-item">
+                            <div class="price-value">${formatPrice(data.gasolina)}</div>
+                        </div>
+                    `;
+                    priceDisplay.classList.remove('loading');
+                } else {
+                    const priceDisplay = document.getElementById('priceDisplay');
+                    priceDisplay.innerHTML = '<div class="no-price">Nenhum preço disponível</div>';
+                    priceDisplay.classList.remove('loading');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar preços:', error);
+                const priceDisplay = document.getElementById('priceDisplay');
+                priceDisplay.innerHTML = '<div class="no-price">Erro ao carregar preços</div>';
+                priceDisplay.classList.remove('loading');
+            }
+        }
+
+        // Carregar preços ao iniciar
+        loadPrices();
+
+        // Atualizar preços a cada 5 segundos
+        setInterval(loadPrices, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDVIEW</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #4a90e2 0%, #7bb3f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin: 40px 0 60px;
+        }
+
+        .logo {
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .actions {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 500;
+            border: none;
+            border-radius: 12px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: white;
+            color: #4a90e2;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.95);
+            color: #5a9fd4;
+        }
+
+        .play-button {
+            margin-top: auto;
+            background: linear-gradient(135deg, #2d6ca5 0%, #4a90e2 100%);
+            color: white;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .play-button::after {
+            content: '▶';
+            font-size: 14px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            color: #4a90e2;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #4a90e2;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-save {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .currency-prefix {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            padding-left: 35px;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 2000;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .logo {
+                width: 150px;
+            }
+            
+            button {
+                font-size: 16px;
+                padding: 18px;
+            }
+
+            .modal-content {
+                padding: 25px;
+            }
+        }
+
+        @media (min-height: 700px) {
+            .logo-container {
+                margin: 60px 0 80px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #2c5282 0%, #3a6ba5 100%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="img/LOGO_PDVIEW.png" alt="PDVIEW" class="logo">
+        </div>
+        
+        <div class="actions">
+            <button class="btn-primary" onclick="abrirModalPreco()">
+                Trocar Preço
+            </button>
+            
+            <button class="btn-secondary" onclick="enviarVideo()">
+                Enviar Vídeo
+            </button>
+            
+            <button class="play-button" onclick="window.location.href='play.html'">
+                Reproduzir
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Trocar Preço -->
+    <div id="modalPreco" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Atualizar Preços</h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="etanol">Etanol</label>
+                <div class="input-wrapper">
+                    <span class="currency-prefix">R$</span>
+                    <input type="text" id="etanol" placeholder="0,00" 
+                           oninput="formatarValor(this)" 
+                           onkeypress="return apenasNumeros(event)">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="gasolina">Gasolina Comum</label>
+                <div class="input-wrapper">
+                    <span class="currency-prefix">R$</span>
+                    <input type="text" id="gasolina" placeholder="0,00" 
+                           oninput="formatarValor(this)" 
+                           onkeypress="return apenasNumeros(event)">
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+                <button class="btn-save" onclick="salvarPrecos()">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="successMessage" class="success-message">
+        Preços salvos com sucesso!
+    </div>
+
+    <script>
+        function abrirModalPreco() {
+            document.getElementById('modalPreco').classList.add('active');
+            document.getElementById('etanol').value = '';
+            document.getElementById('gasolina').value = '';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalPreco').classList.remove('active');
+        }
+
+        function apenasNumeros(event) {
+            const char = String.fromCharCode(event.which);
+            if (!char.match(/[0-9,]/)) {
+                event.preventDefault();
+                return false;
+            }
+            return true;
+        }
+
+        function formatarValor(input) {
+            let valor = input.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            input.value = valor;
+        }
+
+        async function salvarPrecos() {
+            const etanol = document.getElementById('etanol').value.replace(',', '.');
+            const gasolina = document.getElementById('gasolina').value.replace(',', '.');
+            
+            if (!etanol || !gasolina) {
+                alert('Por favor, preencha todos os campos');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://192.168.15.9:3000/save-price', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        etanol: etanol,
+                        gasolina: gasolina
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    fecharModal();
+                    mostrarMensagemSucesso();
+                } else {
+                    alert('Erro ao salvar preços: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao salvar preços. Verifique se o servidor Node.js está rodando na porta 3000.');
+            }
+        }
+
+        function mostrarMensagemSucesso() {
+            const msg = document.getElementById('successMessage');
+            msg.classList.add('show');
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        function enviarVideo() {
+            alert('Funcionalidade Enviar Vídeo - Em desenvolvimento');
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modalPreco').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModal();
+            }
+        });
+    </script>
+</body>
+</html>
