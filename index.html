@@ -56,24 +56,27 @@
         }
 
         .function-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            display: block;
             margin-bottom: 20px;
         }
 
         .function-card {
-            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px 20px;
+            border-radius: 16px;
+            padding: 18px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+            border: none;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
 
         .function-card::before {
@@ -100,8 +103,8 @@
         }
 
         .function-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
         }
 
         .function-card:active {
@@ -130,16 +133,17 @@
         }
 
         .card-title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
+            color: white;
+            margin: 0;
         }
 
         .card-description {
-            font-size: 12px;
-            color: #666;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
             line-height: 1.4;
+            margin: 0;
         }
 
         .play-section {
@@ -408,15 +412,10 @@
         
         <div class="main-content">
             <div class="function-grid">
-                <div class="function-card price-card" onclick="abrirModalPreco()">
+                <button class="function-card price-card" onclick="abrirModalPreco()">
                     <div class="card-title">Trocar Preço</div>
                     <div class="card-description">Atualizar valores de combustível</div>
-                </div>
-                
-                <div class="function-card upload-card" onclick="enviarVideo()">
-                    <div class="card-title">Enviar Vídeo</div>
-                    <div class="card-description">Upload de novo conteúdo</div>
-                </div>
+                </button>
             </div>
             
             <div class="play-section">
@@ -536,9 +535,6 @@
             }, 3000);
         }
 
-        function enviarVideo() {
-            alert('Funcionalidade Enviar Vídeo - Em desenvolvimento');
-        }
 
         // Fechar modal ao clicar fora
         document.getElementById('modalPreco').addEventListener('click', function(e) {
