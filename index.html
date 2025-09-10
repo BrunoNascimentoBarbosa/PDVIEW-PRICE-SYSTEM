@@ -13,104 +13,194 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #4a90e2 0%, #7bb3f0 100%);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 20%, #7bb3f0 60%, #4a90e2 100%);
+            background-attachment: fixed;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             padding: 20px;
         }
 
         .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 400px;
+            max-width: 430px;
             width: 100%;
             margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .logo-container {
+        .header {
             text-align: center;
-            margin: 40px 0 60px;
+            padding: 40px 0 30px;
         }
 
         .logo {
-            width: 180px;
+            width: 160px;
             height: auto;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+            margin-bottom: 15px;
         }
 
-        .actions {
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            justify-content: center;
+            padding: 0 10px;
         }
 
-        button {
-            width: 100%;
-            padding: 20px;
-            font-size: 18px;
-            font-weight: 500;
-            border: none;
-            border-radius: 12px;
-            background: white;
-            color: #333;
+        .function-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .function-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
             overflow: hidden;
         }
 
-        button::before {
+        .function-card::before {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(74, 144, 226, 0.1);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(103, 126, 234, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
         }
 
-        button:active::before {
-            width: 300px;
-            height: 300px;
+        .function-card:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s ease;
         }
 
-        button:active {
-            transform: scale(0.98);
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
 
-        .btn-primary {
-            background: white;
-            color: #4a90e2;
-            font-weight: 600;
+        .function-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.95);
-            color: #5a9fd4;
+        .function-card:active {
+            transform: translateY(-2px) scale(0.98);
         }
 
-        .play-button {
-            margin-top: auto;
-            background: linear-gradient(135deg, #2d6ca5 0%, #4a90e2 100%);
-            color: white;
-            font-weight: 600;
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
         }
 
-        .play-button::after {
-            content: '▶';
-            font-size: 14px;
+        .price-card .card-icon {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .upload-card .card-icon {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .play-section {
+            margin-top: 20px;
+            padding: 20px 0 40px;
+        }
+
+        .play-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4a90e2, #7bb3f0);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(74, 144, 226, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .play-button:hover::before {
+            left: 100%;
+        }
+
+        .play-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(74, 144, 226, 0.4);
+        }
+
+        .play-button:active {
+            transform: translateY(-1px);
+        }
+
+        .play-icon {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a90e2;
+            font-size: 12px;
         }
 
         /* Modal Styles */
@@ -121,7 +211,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
             z-index: 1000;
             padding: 20px;
         }
@@ -134,22 +225,36 @@
 
         .modal-content {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 24px;
+            padding: 35px;
             width: 100%;
-            max-width: 350px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 360px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
         }
 
         .modal-header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .modal-header h2 {
-            color: #4a90e2;
+            color: #333;
             font-size: 24px;
-            font-weight: 600;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            color: #666;
+            font-size: 14px;
         }
 
         .form-group {
@@ -158,51 +263,68 @@
 
         .form-group label {
             display: block;
-            color: #666;
+            color: #555;
             font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
 
         .form-group input {
             width: 100%;
-            padding: 12px 15px;
+            padding: 15px 20px;
             font-size: 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            transition: border-color 0.3s;
+            border-radius: 12px;
+            transition: all 0.3s ease;
             outline: none;
+            background: #fafafa;
         }
 
         .form-group input:focus {
-            border-color: #4a90e2;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .modal-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 25px;
+            gap: 12px;
+            margin-top: 30px;
         }
 
         .modal-buttons button {
             flex: 1;
-            padding: 12px;
+            padding: 15px;
             font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .btn-cancel {
-            background: #f0f0f0;
+            background: #f5f5f5;
             color: #666;
         }
 
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
         .btn-save {
-            background: #4a90e2;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
         }
 
         .currency-prefix {
             position: absolute;
-            left: 15px;
+            left: 20px;
             top: 50%;
             transform: translateY(-50%);
             color: #999;
@@ -215,26 +337,27 @@
         }
 
         .input-wrapper input {
-            padding-left: 35px;
+            padding-left: 45px;
         }
 
         .success-message {
             position: fixed;
-            top: 20px;
+            top: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: #4caf50;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
             display: none;
             z-index: 2000;
+            font-weight: 500;
         }
 
         .success-message.show {
             display: block;
-            animation: slideDown 0.3s ease;
+            animation: slideDown 0.4s ease;
         }
 
         @keyframes slideDown {
@@ -250,50 +373,58 @@
 
         @media (max-width: 380px) {
             .logo {
-                width: 150px;
+                width: 140px;
             }
             
-            button {
-                font-size: 16px;
-                padding: 18px;
+            .function-grid {
+                gap: 12px;
+            }
+
+            .function-card {
+                padding: 20px 15px;
             }
 
             .modal-content {
-                padding: 25px;
+                padding: 30px 25px;
             }
         }
 
-        @media (min-height: 700px) {
-            .logo-container {
-                margin: 60px 0 80px;
+        @media (orientation: landscape) and (max-height: 600px) {
+            .header {
+                padding: 20px 0 15px;
             }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            body {
-                background: linear-gradient(135deg, #2c5282 0%, #3a6ba5 100%);
+            
+            .play-section {
+                padding: 15px 0 20px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo-container">
+        <div class="header">
             <img src="img/LOGO_PDVIEW.png" alt="PDVIEW" class="logo">
         </div>
         
-        <div class="actions">
-            <button class="btn-primary" onclick="abrirModalPreco()">
-                Trocar Preço
-            </button>
+        <div class="main-content">
+            <div class="function-grid">
+                <div class="function-card price-card" onclick="abrirModalPreco()">
+                    <div class="card-title">Trocar Preço</div>
+                    <div class="card-description">Atualizar valores de combustível</div>
+                </div>
+                
+                <div class="function-card upload-card" onclick="enviarVideo()">
+                    <div class="card-title">Enviar Vídeo</div>
+                    <div class="card-description">Upload de novo conteúdo</div>
+                </div>
+            </div>
             
-            <button class="btn-secondary" onclick="enviarVideo()">
-                Enviar Vídeo
-            </button>
-            
-            <button class="play-button" onclick="window.location.href='play.html'">
-                Reproduzir
-            </button>
+            <div class="play-section">
+                <button class="play-button" onclick="window.location.href='play.html'">
+                    <div class="play-icon">▶</div>
+                    Reproduzir Conteúdo
+                </button>
+            </div>
         </div>
     </div>
 
@@ -302,6 +433,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Atualizar Preços</h2>
+                <div class="modal-subtitle">Configure os valores dos combustíveis</div>
             </div>
             
             <div class="form-group">
@@ -332,7 +464,7 @@
     </div>
 
     <div id="successMessage" class="success-message">
-        Preços salvos com sucesso!
+        ✓ Preços salvos com sucesso!
     </div>
 
     <script>
@@ -413,6 +545,22 @@
             if (e.target === this) {
                 fecharModal();
             }
+        });
+
+        // Animação de entrada dos cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.function-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.6s ease';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 150);
+            });
         });
     </script>
 </body>
