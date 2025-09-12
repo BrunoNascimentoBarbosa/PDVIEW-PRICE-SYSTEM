@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -90,9 +91,12 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 0.6;
             }
+
             50% {
                 opacity: 1;
             }
@@ -106,7 +110,7 @@
             .price-value {
                 font-size: 28px;
             }
-            
+
             .fuel-type {
                 font-size: 12px;
             }
@@ -117,12 +121,13 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div id="priceDisplay" class="price-display loading">
             <div class="no-price">Carregando preços...</div>
         </div>
-        
+
         <video width="400" height="400" controls autoplay loop>
             <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
             Seu navegador não suporta vídeo HTML5.
@@ -144,16 +149,17 @@
         async function loadPrices() {
             try {
                 const response = await fetch('http://192.168.15.9:3000/get-price');
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     const priceDisplay = document.getElementById('priceDisplay');
-                    
+
                     priceDisplay.innerHTML = `
                         <div class="price-item">
                             <div class="price-value">${formatPrice(data.etanol)}</div>
                         </div>
-                        
+                        <br>
+                        <br>
                         <div class="price-item">
                             <div class="price-value">${formatPrice(data.gasolina)}</div>
                         </div>
@@ -179,4 +185,5 @@
         setInterval(loadPrices, 5000);
     </script>
 </body>
+
 </html>
