@@ -148,7 +148,9 @@
 
         async function loadPrices() {
             try {
-                const response = await fetch('http://localhost:3000/get-price');
+                // Usa o mesmo host de onde a página foi carregada
+                const nodeServerUrl = `http://${window.location.hostname}:3000/get-price`;
+                const response = await fetch(nodeServerUrl);
 
                 if (response.ok) {
                     const data = await response.json();

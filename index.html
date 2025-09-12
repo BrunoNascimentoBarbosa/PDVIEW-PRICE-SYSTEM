@@ -503,7 +503,9 @@
             }
 
             try {
-                const response = await fetch('http://localhost:3000/save-price', {
+                // Usa o mesmo host de onde a página foi carregada
+                const nodeServerUrl = `http://${window.location.hostname}:3000/save-price`;
+                const response = await fetch(nodeServerUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
