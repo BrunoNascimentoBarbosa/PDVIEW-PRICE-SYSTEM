@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=192, height=384, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,7 +12,8 @@
             box-sizing: border-box;
         }
 
-        html, body {
+        html,
+        body {
             width: 192px;
             height: 384px;
             background: #000;
@@ -37,7 +39,8 @@
             left: 0;
             width: 192px;
             height: 384px;
-            object-fit: cover; /* Preenche mantendo proporção */
+            object-fit: cover;
+            /* Preenche mantendo proporção */
             background: #000;
         }
 
@@ -55,7 +58,8 @@
             position: absolute;
             font-size: 26px;
             font-weight: bold;
-            color: #FF0000; /* VERMELHO */
+            color: #FF0000;
+            /* VERMELHO */
             text-shadow:
                 -2px -2px 3px #000,
                 2px -2px 3px #000,
@@ -76,11 +80,15 @@
 
         /* Posições mais acima na tela */
         .etanol-price {
-            top: 120px; /* Subiu 25px */
+            top: 10px;
+            margin-left: 40px;
+            /* Subiu 25px */
         }
 
         .gasolina-price {
-            top: 220px; /* Subiu 25px */
+            top: 55px;
+            margin-left: 40px;
+            /* Subiu 25px */
         }
 
         .loading {
@@ -92,21 +100,6 @@
             font-size: 12px;
         }
 
-        .connection-status {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #0F0;
-            z-index: 100;
-            opacity: 0.8;
-        }
-
-        .connection-status.offline {
-            background: #F00;
-        }
 
         /* Remove controles do vídeo */
         video::-webkit-media-controls {
@@ -114,6 +107,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <video id="mainVideo" autoplay loop muted playsinline webkit-playsinline>
@@ -123,8 +117,6 @@
         <div id="priceDisplay" class="price-display">
             <div class="loading">Carregando...</div>
         </div>
-
-        <div class="connection-status" id="connectionStatus"></div>
     </div>
 
     <script>
@@ -139,7 +131,6 @@
         let reloadTimer = null;
 
         const video = document.getElementById('mainVideo');
-        const statusIndicator = document.getElementById('connectionStatus');
         const priceDisplay = document.getElementById('priceDisplay');
 
         // Desabilitar controles
@@ -150,20 +141,16 @@
         }
 
         function updateConnectionStatus(online) {
-            if (online) {
-                statusIndicator.classList.remove('offline');
-            } else {
-                statusIndicator.classList.add('offline');
-            }
+            // Removido - não há mais indicador visual
         }
 
         async function loadPrices() {
             try {
                 // API de preços roda na porta 3000 (Node.js)
                 const baseUrl = window.location.hostname === 'localhost' ||
-                               window.location.hostname === '127.0.0.1'
-                               ? 'http://localhost:3000'
-                               : `http://${window.location.hostname}:3000`;
+                    window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3000'
+                    : `http://${window.location.hostname}:3000`;
 
                 const response = await fetch(baseUrl + '/get-price', {
                     cache: 'no-cache',
@@ -278,9 +265,9 @@
         async function heartbeat() {
             try {
                 const baseUrl = window.location.hostname === 'localhost' ||
-                               window.location.hostname === '127.0.0.1'
-                               ? 'http://localhost:8000'
-                               : `http://${window.location.hostname}:8000`;
+                    window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:8000'
+                    : `http://${window.location.hostname}:8000`;
 
                 const response = await fetch(baseUrl + '/', {
                     method: 'HEAD',
@@ -314,7 +301,7 @@
         });
 
         // Função de debug para ajustar posições (usar no console F12)
-        window.adjustPrices = function(etanolTop, gasolinaTop) {
+        window.adjustPrices = function (etanolTop, gasolinaTop) {
             const etanol = document.querySelector('.etanol-price');
             const gasolina = document.querySelector('.gasolina-price');
             if (etanol) etanol.style.top = etanolTop + 'px';
@@ -347,4 +334,5 @@
         }
     </script>
 </body>
+
 </html>
