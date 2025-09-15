@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDVIEW - Player Otimizado</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            position: relative;
+            max-width: 192px;
+            width: 100%;
+        }
+
+        .price-display {
+            position: absolute;
+            top: 5px;
+            left: 96px;
+            right: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            padding: 0 10px;
+            color: red;
+        }
+
+        .price-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .price-value {
+            font-size: 18px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .no-price {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            padding: 40px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            z-index: 100;
+            transition: background 0.3s;
+        }
+
+        .connection-status.offline {
+            background: #f44336;
+            animation: blink 1s infinite;
+        }
+
+        .connection-status.reconnecting {
+            background: #FFC107;
+            animation: blink 0.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @media (max-width: 200px) {
+            .price-value {
+                font-size: 14px;
+            }
+
+            .price-display {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus"></div>
+
+    <div class="container">
+        <div id="priceDisplay" class="price-display loading">
+            <div class="no-price">Carregando preços...</div>
+        </div>
+
+        <video id="mainVideo" width="192" height="284" controls autoplay loop muted playsinline>
+            <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
+            Seu navegador não suporta vídeo HTML5.
+        </video>
+    </div>
+
+    <script>
+        // Configurações OTIMIZADAS para Orange Pi
+        const CONFIG = {
+            priceUpdateInterval: 30000,   // Atualizar preços a cada 30s (era 5s)
+            heartbeatInterval: 10000,     // Verificar servidor a cada 10s (era 3s)
+            reloadPageTimeout: 60000,     // Recarregar página após 60s offline (era 30s)
+            videoRetryInterval: 5000,     // Tentar recarregar vídeo a cada 5s (era 2s)
+            maxRetries: 3                 // Reduzir tentativas (era 5)
+        };
+
+        // Estado da aplicação
+        let isOnline = true;
+        let retryCount = 0;
+        let reloadTimer = null;
+        let lastPriceUpdate = 0;
+
+        // Elementos DOM
+        const video = document.getElementById('mainVideo');
+        const statusIndicator = document.getElementById('connectionStatus');
+        const priceDisplay = document.getElementById('priceDisplay');
+
+        function formatPrice(value) {
+            return value.toFixed(2);
+        }
+
+        // Atualizar indicador de status
+        function updateConnectionStatus(status) {
+            statusIndicator.className = 'connection-status';
+            if (status === 'offline') {
+                statusIndicator.classList.add('offline');
+            } else if (status === 'reconnecting') {
+                statusIndicator.classList.add('reconnecting');
+            }
+        }
+
+        async function loadPrices() {
+            // Evita requisições muito frequentes
+            const now = Date.now();
+            if (now - lastPriceUpdate < 5000) {
+                return; // Ignora se última atualização foi há menos de 5s
+            }
+            lastPriceUpdate = now;
+
+            try {
+                // USA SERVIDOR UNIFICADO - mesma porta 8000
+                const response = await fetch('/get-price', {
+                    cache: 'no-cache'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    priceDisplay.innerHTML = `
+                        <div class="price-item">
+                            <div class="price-value">${formatPrice(data.etanol)}</div>
+                        </div>
+                        <br>
+                        <br>
+                        <div class="price-item">
+                            <div class="price-value">${formatPrice(data.gasolina)}</div>
+                        </div>
+                    `;
+                    priceDisplay.classList.remove('loading');
+
+                    // Servidor está respondendo
+                    if (!isOnline) {
+                        console.log('Servidor reconectado');
+                        handleServerReconnection();
+                    }
+                    isOnline = true;
+                    updateConnectionStatus('online');
+
+                } else {
+                    throw new Error('Resposta não OK');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar preços:', error);
+
+                if (isOnline) {
+                    console.log('Servidor desconectado');
+                    handleServerDisconnection();
+                }
+                isOnline = false;
+                updateConnectionStatus('offline');
+            }
+        }
+
+        // Lidar com desconexão do servidor
+        function handleServerDisconnection() {
+            updateConnectionStatus('offline');
+
+            // Timer mais longo para reload
+            if (!reloadTimer) {
+                reloadTimer = setTimeout(() => {
+                    console.log('Recarregando página devido a timeout');
+                    window.location.reload(true);
+                }, CONFIG.reloadPageTimeout);
+            }
+
+            ensureVideoPlaying();
+        }
+
+        // Lidar com reconexão do servidor (OTIMIZADO)
+        function handleServerReconnection() {
+            updateConnectionStatus('online');
+
+            // Cancelar timer de reload
+            if (reloadTimer) {
+                clearTimeout(reloadTimer);
+                reloadTimer = null;
+            }
+
+            // NÃO recarrega a página inteira - apenas atualiza vídeo se necessário
+            console.log('Servidor reconectado - verificando vídeo...');
+
+            // Apenas recarrega vídeo se estiver com erro
+            if (video.error || video.paused) {
+                reloadVideoSimple();
+            }
+        }
+
+        // Garantir que o vídeo está tocando
+        function ensureVideoPlaying() {
+            if (video.paused || video.ended) {
+                video.play().catch(e => {
+                    console.log('Erro ao tentar reproduzir vídeo:', e);
+                    // Tentar novamente em 2 segundos
+                    setTimeout(ensureVideoPlaying, 2000);
+                });
+            }
+        }
+
+        // Recarregar vídeo de forma SIMPLES e OTIMIZADA
+        function reloadVideoSimple() {
+            console.log('Recarregando vídeo (método otimizado)...');
+
+            const currentTime = video.currentTime;
+
+            // Método simples: apenas muda o src com timestamp
+            video.src = `Videos/video-base-580x1080-sem-valor.mp4?t=${Date.now()}`;
+            video.load();
+
+            // Tenta manter a posição anterior
+            video.currentTime = currentTime;
+
+            // Tenta reproduzir
+            setTimeout(() => {
+                video.play().catch(e => {
+                    console.log('Erro ao reproduzir após reload:', e);
+                    retryCount++;
+
+                    if (retryCount < CONFIG.maxRetries) {
+                        setTimeout(reloadVideoSimple, CONFIG.videoRetryInterval);
+                    }
+                });
+            }, 500);
+        }
+
+        // Event listeners SIMPLIFICADOS para o vídeo
+        video.addEventListener('error', (e) => {
+            console.error('Erro no vídeo:', e);
+            updateConnectionStatus('reconnecting');
+
+            // Espera mais antes de tentar recarregar
+            setTimeout(() => {
+                if (video.error) {
+                    reloadVideoSimple();
+                }
+            }, CONFIG.videoRetryInterval);
+        });
+
+        video.addEventListener('playing', () => {
+            retryCount = 0; // Reset contador
+            updateConnectionStatus('online');
+        });
+
+        // Heartbeat OTIMIZADO
+        async function heartbeat() {
+            try {
+                // Verificação mais leve - apenas HEAD request
+                const response = await fetch('/', {
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                });
+
+                if (!isOnline) {
+                    handleServerReconnection();
+                    isOnline = true;
+                }
+            } catch (error) {
+                if (isOnline) {
+                    handleServerDisconnection();
+                    isOnline = false;
+                }
+            }
+        }
+
+        // Detectar quando a página perde/ganha foco
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('Página voltou ao foco');
+                loadPrices();
+                ensureVideoPlaying();
+            }
+        });
+
+        // Inicialização
+        function init() {
+            console.log('Iniciando PDVIEW Player Otimizado...');
+            console.log('Configurações:', CONFIG);
+
+            // Carregar preços iniciais
+            loadPrices();
+
+            // Configurar atualizações periódicas com intervalos otimizados
+            setInterval(loadPrices, CONFIG.priceUpdateInterval);
+            setInterval(heartbeat, CONFIG.heartbeatInterval);
+
+            // Garantir que o vídeo está tocando
+            ensureVideoPlaying();
+
+            // Forçar play inicial após 1 segundo
+            setTimeout(() => {
+                video.play().catch(() => {
+                    console.log('Autoplay bloqueado, usuário precisa interagir');
+                });
+            }, 1000);
+        }
+
+        // Iniciar quando a página carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        console.log('PDVIEW Player - Versão Otimizada para Orange Pi Zero 2W');
+    </script>
+</body>
+</html>
