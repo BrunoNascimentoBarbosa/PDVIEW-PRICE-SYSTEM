@@ -295,10 +295,10 @@ def main_menu():
             print("  📡 Status: SERVIDORES RODANDO")
             print("-" * 60)
 
-        print("   1) 🔵 Instalação PDVIEW OFFLINE")
-        print("   2) 🟢 RODAR PDVIEW OFFLINE")
-        print("   3) 🛑 PARAR PDVIEW OFFLINE")
-        print("   4) 📤 Sair\n")
+        print("   1)  Instalação PDVIEW OFFLINE")
+        print("   2)  RODAR PDVIEW OFFLINE")
+        print("   3)  PARAR PDVIEW OFFLINE")
+        print("   4)  Sair\n")
         print("-" * 60)
 
         try:
