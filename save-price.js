@@ -76,9 +76,36 @@ const server = http.createServer((req, res) => {
 });
 
 const PORT = 3000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor de preços rodando na porta ${PORT}`);
+const HOST = '0.0.0.0'; // Bind em todas as interfaces
+
+server.listen(PORT, HOST, () => {
+    console.log(`Servidor de preços rodando em ${HOST}:${PORT}`);
     console.log(`Use http://localhost:${PORT}/save-price para salvar preços`);
     console.log(`Use http://localhost:${PORT}/get-price para buscar preços`);
-    console.log(`Ou http://192.168.15.9:${PORT} da rede local`);
+
+    // Obtém IP local
+    const os = require('os');
+    const networkInterfaces = os.networkInterfaces();
+    Object.keys(networkInterfaces).forEach(interface => {
+        networkInterfaces[interface].forEach(details => {
+            if (details.family === 'IPv4' && !details.internal) {
+                console.log(`Rede local: http://${details.address}:${PORT}`);
+            }
+        });
+    });
+});
+
+// Tratamento de erros
+server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.error(`Erro: Porta ${PORT} já está em uso`);
+        console.error('Verifique se outro processo está usando a porta');
+        console.error('Use: lsof -i :3000 ou netstat -tulpn | grep 3000');
+    } else if (error.code === 'EACCES') {
+        console.error(`Erro: Sem permissão para usar a porta ${PORT}`);
+        console.error('Tente executar com sudo ou use uma porta > 1024');
+    } else {
+        console.error('Erro no servidor:', error);
+    }
+    process.exit(1);
 });

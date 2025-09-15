@@ -221,6 +221,13 @@ def install_dependencies():
 
     input("\nPressione ENTER para voltar ao menu...")
 
+def check_port(port):
+    """Verifica se uma porta está em uso"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+    return result == 0  # True se a porta está em uso
+
 def run_servers():
     clear_screen()
     print_header()
@@ -241,7 +248,45 @@ def run_servers():
         input("\nPressione ENTER para voltar ao menu...")
         return
 
-    print("Iniciando servidores...\n")
+    # Verifica portas em uso
+    print("Verificando portas...\n")
+
+    if check_port(3000):
+        print("⚠️  Porta 3000 já está em uso!")
+        print("Tentando liberar a porta...")
+        try:
+            # Tenta matar processo na porta 3000
+            if platform.system() != "Windows":
+                os.system("lsof -ti:3000 | xargs kill -9 2>/dev/null")
+            time.sleep(2)
+            if check_port(3000):
+                print("❌ Não foi possível liberar a porta 3000")
+                print("Execute: sudo lsof -i :3000")
+                print("E depois: sudo kill -9 [PID]")
+                input("\nPressione ENTER para voltar ao menu...")
+                return
+            else:
+                print("✓ Porta 3000 liberada")
+        except:
+            pass
+
+    if check_port(8000):
+        print("⚠️  Porta 8000 já está em uso!")
+        print("Tentando liberar a porta...")
+        try:
+            if platform.system() != "Windows":
+                os.system("lsof -ti:8000 | xargs kill -9 2>/dev/null")
+            time.sleep(2)
+            if check_port(8000):
+                print("❌ Não foi possível liberar a porta 8000")
+                input("\nPressione ENTER para voltar ao menu...")
+                return
+            else:
+                print("✓ Porta 8000 liberada")
+        except:
+            pass
+
+    print("\nIniciando servidores...\n")
 
     try:
         # Inicia servidor Python em thread separada
@@ -261,9 +306,16 @@ def run_servers():
             processes['api'] = subprocess.Popen(
                 ["node", "save-price.js"],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+                stderr=subprocess.STDOUT,  # Combina stderr com stdout
+                text=True,
+                bufsize=1
             )
+            # Mostra output do Node.js para debug
+            for line in processes['api'].stdout:
+                if "Erro" in line or "Error" in line or "EADDRINUSE" in line:
+                    print(f"[NODE.JS ERROR] {line.strip()}")
+                elif "rodando" in line or "listening" in line:
+                    print(f"[NODE.JS] {line.strip()}")
             processes['api'].wait()
 
         # Cria threads para os servidores
