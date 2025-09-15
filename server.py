@@ -74,8 +74,17 @@ class MyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         # Adiciona headers CORS para permitir acesso
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD')
+
+        # Headers específicos para vídeos - evitar cache e permitir reconexão
+        if self.path.endswith(('.mp4', '.webm', '.ogg')):
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+            self.send_header('Accept-Ranges', 'bytes')  # Permitir seek no vídeo
+        else:
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+
         super().end_headers()
 
     def guess_type(self, path):
