@@ -1,0 +1,21 @@
+{
+  "name": "pdview-offline",
+  "version": "1.0.0",
+  "description": "Sistema de gerenciamento de preços offline otimizado para Orange Pi",
+  "main": "save-price-optimized.js",
+  "scripts": {
+    "start": "node --max-old-space-size=128 --expose-gc save-price-optimized.js",
+    "start-basic": "node save-price.js"
+  },
+  "keywords": [
+    "price",
+    "management",
+    "offline",
+    "orangepi"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -101,9 +101,55 @@ def install_dependencies():
         print(f"Sistema não reconhecido: {system}")
         print("Instale manualmente Python3 e Node.js")
 
+    # Instala psutil do requirements.txt
+    print("\n" + "-" * 60)
+    print("Instalando dependências Python (psutil para monitoramento)...")
+
+    # Verifica se psutil já está instalado
+    try:
+        import psutil
+        print("✓ psutil já está instalado (versão {})".format(psutil.__version__))
+        psutil_installed = True
+    except ImportError:
+        psutil_installed = False
+        print("⚠ psutil não encontrado, instalando...")
+
+        # Tenta instalar do requirements.txt
+        if os.path.exists("requirements.txt"):
+            try:
+                result = subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"],
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("✓ psutil instalado com sucesso!")
+                    psutil_installed = True
+                else:
+                    print("✗ Erro ao instalar psutil")
+                    print("  Tente manualmente: pip3 install psutil")
+            except Exception as e:
+                print(f"✗ Erro: {e}")
+                print("  Tente manualmente: pip3 install psutil")
+        else:
+            # Cria requirements.txt se não existir
+            print("  Criando requirements.txt...")
+            with open("requirements.txt", "w") as f:
+                f.write("psutil>=5.9.0\n")
+            print("✓ requirements.txt criado")
+
+            # Tenta instalar
+            try:
+                result = subprocess.run([sys.executable, "-m", "pip", "install", "psutil"],
+                                      capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("✓ psutil instalado com sucesso!")
+                    psutil_installed = True
+                else:
+                    print("✗ Erro ao instalar psutil")
+            except:
+                print("✗ Não foi possível instalar psutil automaticamente")
+
     # Verifica instalação
     print("\n" + "-" * 60)
-    print("Verificando instalação...")
+    print("Verificando instalação completa...")
 
     python_ok = check_python()
     node_ok = check_node()
@@ -118,11 +164,21 @@ def install_dependencies():
     else:
         print("✗ Node.js não encontrado")
 
+    if psutil_installed:
+        print("✓ psutil instalado (monitor do sistema disponível)")
+    else:
+        print("⚠ psutil não instalado (monitor do sistema indisponível)")
+
     # Cria diretório de preços se não existir
+    print("\n" + "-" * 60)
+    print("Configurando arquivos do sistema...")
+
     price_dir = Path("price")
     if not price_dir.exists():
         price_dir.mkdir()
         print("✓ Diretório 'price' criado")
+    else:
+        print("✓ Diretório 'price' já existe")
 
     # Cria arquivo inicial de preços se não existir
     price_file = price_dir / "current-price.json"
@@ -137,6 +193,31 @@ def install_dependencies():
         with open(price_file, 'w') as f:
             json.dump(initial_data, f, indent=2)
         print("✓ Arquivo de preços inicial criado")
+    else:
+        print("✓ Arquivo de preços já existe")
+
+    # Resumo final
+    print("\n" + "=" * 60)
+    print("RESUMO DA INSTALAÇÃO:")
+    print("-" * 60)
+
+    if python_ok and node_ok and psutil_installed:
+        print("✅ Todas as dependências instaladas com sucesso!")
+        print("   - Python3 ✓")
+        print("   - Node.js ✓")
+        print("   - psutil ✓ (monitor disponível)")
+        print("\n💡 Dica: Execute a opção 2 para iniciar os servidores")
+    else:
+        print("⚠️ Algumas dependências estão faltando:")
+        if not python_ok:
+            print("   - Python3 ✗ (necessário)")
+        if not node_ok:
+            print("   - Node.js ✗ (necessário)")
+        if not psutil_installed:
+            print("   - psutil ✗ (opcional, para monitor)")
+        print("\n💡 Corrija os problemas e execute novamente")
+
+    print("=" * 60)
 
     input("\nPressione ENTER para voltar ao menu...")
 
@@ -207,6 +288,11 @@ def run_servers():
         print("   http://localhost:8000")
         print(f"\n📱 ACESSO NA REDE (celular/tablet):")
         print(f"   http://{local_ip}:8000")
+
+        print("\n📊 MONITOR DO SISTEMA:")
+        print("   http://localhost:8000/monitor")
+        print(f"   http://{local_ip}:8000/monitor")
+
         print("\n" + "-" * 60)
         print("\nServiços ativos:")
         print("  • Servidor Web (Python) - Porta 8000")

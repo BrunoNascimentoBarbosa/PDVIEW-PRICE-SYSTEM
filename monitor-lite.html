@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Lite - PDView</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #0f0;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.5em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0f0;
+        }
+
+        .metric {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid #0f0;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .metric-label {
+            display: inline-block;
+            width: 80px;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #0f0;
+        }
+
+        .bar {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            margin-top: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #0f0;
+            transition: width 0.3s;
+        }
+
+        .bar-fill.warning {
+            background: #ff0;
+        }
+
+        .bar-fill.danger {
+            background: #f00;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #0f0;
+        }
+
+        .offline {
+            color: #f00;
+            border-color: #f00;
+        }
+
+        #timestamp {
+            text-align: center;
+            font-size: 0.8em;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>[ MONITOR LITE ]</h1>
+
+        <div class="metric">
+            <span class="metric-label">CPU:</span>
+            <span class="metric-value" id="cpu">--</span>
+            <div class="bar">
+                <div class="bar-fill" id="cpu-bar"></div>
+            </div>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">RAM:</span>
+            <span class="metric-value" id="ram">--</span>
+            <div class="bar">
+                <div class="bar-fill" id="ram-bar"></div>
+            </div>
+        </div>
+
+        <div class="metric">
+            <span class="metric-label">MEM USADA:</span>
+            <span class="metric-value" id="mem-mb">-- MB</span>
+        </div>
+
+        <div class="status" id="status">
+            STATUS: CONECTANDO...
+        </div>
+
+        <div id="timestamp">--</div>
+    </div>
+
+    <script>
+        // Versão ULTRA LEVE - mínimo de recursos
+
+        let failCount = 0;
+
+        async function update() {
+            try {
+                const response = await fetch('/api/system-status');
+                const data = await response.json();
+
+                // Atualiza valores
+                document.getElementById('cpu').textContent = data.cpu + '%';
+                document.getElementById('ram').textContent = data.ram + '%';
+                document.getElementById('mem-mb').textContent = (data.ram_mb || 0) + ' MB';
+
+                // Atualiza barras
+                const cpuBar = document.getElementById('cpu-bar');
+                const ramBar = document.getElementById('ram-bar');
+
+                cpuBar.style.width = data.cpu + '%';
+                ramBar.style.width = data.ram + '%';
+
+                // Cores de alerta
+                cpuBar.className = 'bar-fill';
+                ramBar.className = 'bar-fill';
+
+                if (data.cpu > 80) cpuBar.classList.add('danger');
+                else if (data.cpu > 60) cpuBar.classList.add('warning');
+
+                if (data.ram > 85) ramBar.classList.add('danger');
+                else if (data.ram > 70) ramBar.classList.add('warning');
+
+                // Status
+                document.getElementById('status').textContent = 'STATUS: ONLINE';
+                document.getElementById('status').className = '';
+
+                failCount = 0;
+
+            } catch (e) {
+                failCount++;
+                if (failCount > 2) {
+                    document.getElementById('status').textContent = 'STATUS: OFFLINE';
+                    document.getElementById('status').className = 'offline';
+                }
+            }
+
+            // Timestamp
+            const now = new Date().toLocaleTimeString('pt-BR');
+            document.getElementById('timestamp').textContent = 'Atualizado: ' + now;
+        }
+
+        // Atualiza a cada 15 segundos (equilibrado)
+        setInterval(update, 15000);
+
+        // Primeira atualização
+        update();
+    </script>
+</body>
+</html>
