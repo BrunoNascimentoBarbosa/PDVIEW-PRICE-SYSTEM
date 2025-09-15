@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=192, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDVIEW - LED 192x384</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            width: 192px;
+            height: 384px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #mainVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 192px;
+            height: 384px;
+            object-fit: fill; /* Força o vídeo a preencher todo o espaço */
+        }
+
+        .price-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+        }
+
+        .price-item {
+            margin: 20px 0;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FF0000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-family: Arial, sans-serif;
+        }
+
+        /* Posicionamento específico para etanol e gasolina */
+        .etanol {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .gasolina {
+            position: absolute;
+            top: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .loading {
+            color: #FFF;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 150px;
+        }
+
+        /* Remove todos os controles do vídeo */
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <video id="mainVideo" autoplay loop muted playsinline>
+        <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
+    </video>
+
+    <div id="priceDisplay" class="price-display">
+        <div class="loading">Carregando...</div>
+    </div>
+
+    <script>
+        // Configurações para LED
+        const CONFIG = {
+            priceUpdateInterval: 30000,   // Atualizar a cada 30s
+            serverUrl: window.location.protocol + '//' + window.location.hostname + ':8000'
+        };
+
+        const video = document.getElementById('mainVideo');
+        const priceDisplay = document.getElementById('priceDisplay');
+
+        function formatPrice(value) {
+            return value.toFixed(2).replace('.', ',');
+        }
+
+        async function loadPrices() {
+            try {
+                const response = await fetch(CONFIG.serverUrl + '/get-price', {
+                    cache: 'no-cache'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    priceDisplay.innerHTML = `
+                        <div class="price-value etanol">${formatPrice(data.etanol)}</div>
+                        <div class="price-value gasolina">${formatPrice(data.gasolina)}</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar preços:', error);
+                // Mantém os últimos valores exibidos
+            }
+        }
+
+        // Forçar vídeo em tela cheia
+        function setupVideo() {
+            video.removeAttribute('controls');
+
+            // Garantir que o vídeo preencha a tela
+            video.style.width = '192px';
+            video.style.height = '384px';
+
+            // Tentar reproduzir
+            video.play().catch(e => {
+                console.log('Autoplay bloqueado, tentando novamente...');
+                setTimeout(() => video.play(), 1000);
+            });
+
+            // Se o vídeo parar, reiniciar
+            video.addEventListener('ended', () => {
+                video.currentTime = 0;
+                video.play();
+            });
+
+            video.addEventListener('pause', () => {
+                video.play();
+            });
+        }
+
+        // Inicialização
+        function init() {
+            setupVideo();
+            loadPrices();
+
+            // Atualizar preços periodicamente
+            setInterval(loadPrices, CONFIG.priceUpdateInterval);
+        }
+
+        // Iniciar quando carregar
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Prevenir zoom e scroll
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+    </script>
+</body>
+</html>

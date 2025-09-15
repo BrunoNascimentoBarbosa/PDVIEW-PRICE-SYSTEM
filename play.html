@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDVIEW - Player</title>
+    <meta name="viewport" content="width=192, height=384, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDVIEW - Painel LED</title>
     <style>
         * {
             margin: 0;
@@ -12,458 +11,340 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        html, body {
+            width: 192px;
+            height: 384px;
             background: #000;
+            overflow: hidden;
+            position: fixed;
+        }
+
+        body {
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+            justify-content: center;
         }
 
         .container {
             position: relative;
-            max-width: 192px;
-            width: 100%;
+            width: 192px;
+            height: 384px;
+        }
+
+        #mainVideo {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 192px;
+            height: 384px;
+            object-fit: cover; /* Preenche mantendo proporção */
+            background: #000;
         }
 
         .price-display {
             position: absolute;
-            top: 5px;
-            left: 96px;
-            right: 0;
+            top: 0;
+            left: 0;
+            width: 192px;
+            height: 384px;
             z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
-            padding: 0 10px;
-            color: red;
-        }
-
-        .price-item {
-            flex: 1;
-            text-align: center;
-        }
-
-        .fuel-type {
-            font-size: 14px;
-            font-weight: 600;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            pointer-events: none;
         }
 
         .price-value {
-            font-size: 18px;
+            position: absolute;
+            font-size: 26px;
             font-weight: bold;
-            line-height: 1;
+            color: #FF0000; /* VERMELHO */
+            text-shadow:
+                -2px -2px 3px #000,
+                2px -2px 3px #000,
+                -2px 2px 3px #000,
+                2px 2px 3px #000,
+                0 0 5px #000;
+            font-family: 'Arial Black', Arial, sans-serif;
+            width: 70px;
+            height: 28px;
+            text-align: center;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -0.5px;
+        }
+
+        /* Posições mais acima na tela */
+        .etanol-price {
+            top: 120px; /* Subiu 25px */
+        }
+
+        .gasolina-price {
+            top: 220px; /* Subiu 25px */
         }
 
         .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 60px 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FFF;
+            font-size: 12px;
         }
 
-        .no-price {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 14px;
-            padding: 40px;
-        }
-
-        /* Indicador de conexão */
         .connection-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            width: 10px;
-            height: 10px;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            background: #4CAF50;
+            background: #0F0;
             z-index: 100;
-            transition: background 0.3s;
+            opacity: 0.8;
         }
 
         .connection-status.offline {
-            background: #f44336;
-            animation: blink 1s infinite;
+            background: #F00;
         }
 
-        .connection-status.reconnecting {
-            background: #FFC107;
-            animation: blink 0.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        .last-update {
-            display: none;
-        }
-
-        @media (max-width: 200px) {
-            .price-value {
-                font-size: 14px;
-            }
-
-            .fuel-type {
-                font-size: 10px;
-            }
-
-            .price-display {
-                padding: 5px;
-            }
+        /* Remove controles do vídeo */
+        video::-webkit-media-controls {
+            display: none !important;
         }
     </style>
 </head>
-
 <body>
-    <div class="connection-status" id="connectionStatus"></div>
-
     <div class="container">
-        <div id="priceDisplay" class="price-display loading">
-            <div class="no-price">Carregando preços...</div>
+        <video id="mainVideo" autoplay loop muted playsinline webkit-playsinline>
+            <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
+        </video>
+
+        <div id="priceDisplay" class="price-display">
+            <div class="loading">Carregando...</div>
         </div>
 
-        <video id="mainVideo" width="192" height="284" controls autoplay loop muted playsinline>
-            <source src="Videos/video-base-580x1080-sem-valor.mp4" type="video/mp4">
-            Seu navegador não suporta vídeo HTML5.
-        </video>
+        <div class="connection-status" id="connectionStatus"></div>
     </div>
 
     <script>
-        // Configurações
+        // Configurações otimizadas para painel LED
         const CONFIG = {
-            priceUpdateInterval: 5000,    // Atualizar preços a cada 5 segundos
-            heartbeatInterval: 3000,      // Verificar servidor a cada 3 segundos
-            reloadPageTimeout: 30000,     // Recarregar página após 30s offline
-            videoRetryInterval: 2000,     // Tentar recarregar vídeo a cada 2s quando erro
-            maxRetries: 5                 // Máximo de tentativas antes de reload completo
+            priceUpdateInterval: 30000,   // 30 segundos
+            heartbeatInterval: 15000,     // 15 segundos
+            reloadPageTimeout: 120000     // 2 minutos
         };
 
-        // Estado da aplicação
         let isOnline = true;
-        let retryCount = 0;
         let reloadTimer = null;
-        let videoRetryTimer = null;
 
-        // Elementos DOM
         const video = document.getElementById('mainVideo');
         const statusIndicator = document.getElementById('connectionStatus');
         const priceDisplay = document.getElementById('priceDisplay');
 
+        // Desabilitar controles
+        video.controls = false;
+
         function formatPrice(value) {
-            return value.toFixed(2);
+            return value.toFixed(2).replace('.', ',');
         }
 
-        function formatDateTime(timestamp) {
-            const date = new Date(timestamp);
-            const hours = date.getHours().toString().padStart(2, '0');
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-
-        // Atualizar indicador de status
-        function updateConnectionStatus(status) {
-            statusIndicator.className = 'connection-status';
-            if (status === 'offline') {
+        function updateConnectionStatus(online) {
+            if (online) {
+                statusIndicator.classList.remove('offline');
+            } else {
                 statusIndicator.classList.add('offline');
-            } else if (status === 'reconnecting') {
-                statusIndicator.classList.add('reconnecting');
-            }
-        }
-
-        // Verificar se o servidor está online
-        async function checkServerStatus() {
-            try {
-                const response = await fetch(`http://${window.location.hostname}:8000/`, {
-                    method: 'HEAD',
-                    cache: 'no-cache',
-                    mode: 'no-cors'
-                });
-                return true;
-            } catch (error) {
-                return false;
             }
         }
 
         async function loadPrices() {
             try {
-                // Usa o mesmo host de onde a página foi carregada
-                const nodeServerUrl = `http://${window.location.hostname}:3000/get-price`;
-                const response = await fetch(nodeServerUrl, {
-                    cache: 'no-cache'
+                // API de preços roda na porta 3000 (Node.js)
+                const baseUrl = window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1'
+                               ? 'http://localhost:3000'
+                               : `http://${window.location.hostname}:3000`;
+
+                const response = await fetch(baseUrl + '/get-price', {
+                    cache: 'no-cache',
+                    mode: 'cors'
                 });
 
                 if (response.ok) {
                     const data = await response.json();
 
                     priceDisplay.innerHTML = `
-                        <div class="price-item">
-                            <div class="price-value">${formatPrice(data.etanol)}</div>
-                        </div>
-                        <br>
-                        <br>
-                        <div class="price-item">
-                            <div class="price-value">${formatPrice(data.gasolina)}</div>
-                        </div>
+                        <div class="price-value etanol-price"><span>${formatPrice(data.etanol)}</span></div>
+                        <div class="price-value gasolina-price"><span>${formatPrice(data.gasolina)}</span></div>
                     `;
-                    priceDisplay.classList.remove('loading');
 
-                    // Servidor está respondendo
                     if (!isOnline) {
                         console.log('Servidor reconectado');
-                        handleServerReconnection();
+                        handleReconnection();
                     }
                     isOnline = true;
-                    updateConnectionStatus('online');
+                    updateConnectionStatus(true);
 
                 } else {
-                    throw new Error('Resposta não OK');
+                    throw new Error('Erro na resposta');
                 }
             } catch (error) {
                 console.error('Erro ao carregar preços:', error);
+                console.error('Verifique se o servidor Node.js está rodando na porta 3000');
+
+                // Mostra erro na tela para debug
+                if (priceDisplay.innerHTML.includes('Carregando')) {
+                    priceDisplay.innerHTML = `
+                        <div class="loading">Erro: Servidor offline<br>Porta 3000</div>
+                    `;
+                }
 
                 if (isOnline) {
                     console.log('Servidor desconectado');
-                    handleServerDisconnection();
+                    handleDisconnection();
                 }
                 isOnline = false;
-                updateConnectionStatus('offline');
+                updateConnectionStatus(false);
             }
         }
 
-        // Lidar com desconexão do servidor
-        function handleServerDisconnection() {
-            updateConnectionStatus('offline');
+        function handleDisconnection() {
+            updateConnectionStatus(false);
 
-            // Iniciar timer para reload da página
             if (!reloadTimer) {
                 reloadTimer = setTimeout(() => {
-                    console.log('Recarregando página devido a timeout');
+                    console.log('Recarregando página...');
                     window.location.reload(true);
                 }, CONFIG.reloadPageTimeout);
             }
 
-            // Tentar manter o vídeo rodando
             ensureVideoPlaying();
         }
 
-        // Lidar com reconexão do servidor
-        function handleServerReconnection() {
-            updateConnectionStatus('reconnecting');
+        function handleReconnection() {
+            updateConnectionStatus(true);
 
-            // Cancelar timer de reload
             if (reloadTimer) {
                 clearTimeout(reloadTimer);
                 reloadTimer = null;
             }
 
-            // FORÇA RELOAD COMPLETO DA PÁGINA QUANDO SERVIDOR RECONECTA
-            console.log('Servidor reconectado - recarregando página completamente...');
-
-            // Aguarda 1 segundo e força reload da página inteira
-            setTimeout(() => {
-                // Adiciona parâmetro para evitar cache
-                const newUrl = window.location.href.split('?')[0] + '?t=' + Date.now();
-                window.location.href = newUrl;
-            }, 1000);
-        }
-
-        // Garantir que o vídeo está tocando
-        function ensureVideoPlaying() {
-            if (video.paused || video.ended) {
-                video.play().catch(e => {
-                    console.log('Erro ao tentar reproduzir vídeo:', e);
-                    // Tentar novamente em 1 segundo
-                    setTimeout(ensureVideoPlaying, 1000);
-                });
-            }
-        }
-
-        // Recarregar o vídeo - VERSÃO MAIS AGRESSIVA
-        function reloadVideo() {
-            console.log('Recarregando vídeo (método agressivo)...');
-
-            // Método 1: Remover e recriar o elemento de vídeo completamente
-            const container = video.parentNode;
-            const videoHTML = video.outerHTML;
-
-            // Remove o vídeo atual
-            video.remove();
-
-            // Cria novo elemento de vídeo
-            const newVideoHTML = videoHTML.replace(
-                'src="Videos/video-base-580x1080-sem-valor.mp4"',
-                `src="Videos/video-base-580x1080-sem-valor.mp4?t=${Date.now()}"`
-            );
-
-            container.insertAdjacentHTML('beforeend', newVideoHTML);
-
-            // Atualiza referência global
-            window.video = document.getElementById('mainVideo');
-            const newVideo = window.video;
-
-            // Força reprodução
-            setTimeout(() => {
-                newVideo.play().catch(e => {
-                    console.log('Tentando método alternativo...');
-
-                    // Método 2: Se falhar, força reload da página inteira
-                    if (retryCount < CONFIG.maxRetries) {
-                        retryCount++;
-                        console.log(`Tentativa ${retryCount} de ${CONFIG.maxRetries}`);
-
-                        // Tenta criar um novo vídeo inline
-                        const tempSrc = `Videos/video-base-580x1080-sem-valor.mp4?cache=${Math.random()}&t=${Date.now()}`;
-                        newVideo.src = tempSrc;
-                        newVideo.load();
-
-                        setTimeout(() => {
-                            newVideo.play().catch(() => {
-                                setTimeout(reloadVideo, CONFIG.videoRetryInterval);
-                            });
-                        }, 500);
-                    } else {
-                        console.log('Forçando reload completo da página...');
-                        // Força reload sem cache
-                        window.location.href = window.location.href + '?reload=' + Date.now();
-                    }
-                });
-
-                // Re-adiciona event listeners
-                newVideo.addEventListener('error', handleVideoError);
-                newVideo.addEventListener('stalled', handleVideoStalled);
-                newVideo.addEventListener('waiting', handleVideoWaiting);
-                newVideo.addEventListener('playing', handleVideoPlaying);
-
-                newVideo.onplaying = () => {
-                    retryCount = 0;
-                    console.log('Vídeo reproduzindo com sucesso após reload');
-                    updateConnectionStatus('online');
-                };
-            }, 100);
-        }
-
-        // Funções separadas para os event listeners
-        function handleVideoError(e) {
-            console.error('Erro no vídeo:', e);
-            updateConnectionStatus('reconnecting');
-            if (!videoRetryTimer) {
-                videoRetryTimer = setTimeout(() => {
-                    reloadVideo();
-                    videoRetryTimer = null;
-                }, CONFIG.videoRetryInterval);
-            }
-        }
-
-        function handleVideoStalled() {
-            console.warn('Vídeo travado, tentando recuperar...');
+            // Apenas verifica o vídeo, não recarrega a página
             ensureVideoPlaying();
         }
 
-        function handleVideoWaiting() {
-            console.log('Vídeo em buffer...');
-            updateConnectionStatus('reconnecting');
-        }
-
-        function handleVideoPlaying() {
-            updateConnectionStatus('online');
-        }
-
-        // Event listeners para o vídeo
-        video.addEventListener('error', handleVideoError);
-        video.addEventListener('stalled', handleVideoStalled);
-        video.addEventListener('waiting', handleVideoWaiting);
-        video.addEventListener('playing', handleVideoPlaying);
-
-        // Heartbeat - verificação periódica do servidor
-        async function heartbeat() {
-            const serverOnline = await checkServerStatus();
-
-            if (!serverOnline && isOnline) {
-                handleServerDisconnection();
-                isOnline = false;
-            } else if (serverOnline && !isOnline) {
-                handleServerReconnection();
-                isOnline = true;
+        function ensureVideoPlaying() {
+            if (video.paused || video.ended) {
+                video.play().catch(e => {
+                    console.log('Tentando reproduzir novamente...');
+                    setTimeout(ensureVideoPlaying, 2000);
+                });
             }
         }
 
-        // Detectar quando a página perde/ganha foco
+        function setupVideo() {
+            // Configurações para garantir reprodução contínua
+            video.addEventListener('ended', () => {
+                video.currentTime = 0;
+                video.play();
+            });
+
+            video.addEventListener('pause', () => {
+                setTimeout(() => {
+                    if (video.paused) {
+                        video.play();
+                    }
+                }, 100);
+            });
+
+            video.addEventListener('error', (e) => {
+                console.error('Erro no vídeo:', e);
+                setTimeout(() => {
+                    video.load();
+                    video.play();
+                }, 5000);
+            });
+
+            // Forçar play inicial
+            video.play().catch(() => {
+                console.log('Autoplay bloqueado');
+                // Tentar novamente após interação
+                document.addEventListener('click', () => {
+                    video.play();
+                }, { once: true });
+            });
+        }
+
+        async function heartbeat() {
+            try {
+                const baseUrl = window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1'
+                               ? 'http://localhost:8000'
+                               : `http://${window.location.hostname}:8000`;
+
+                const response = await fetch(baseUrl + '/', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+
+                if (!isOnline) {
+                    handleReconnection();
+                    isOnline = true;
+                }
+            } catch (error) {
+                if (isOnline) {
+                    handleDisconnection();
+                    isOnline = false;
+                }
+            }
+        }
+
+        // Prevenir zoom e scroll em telas touch
+        document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+
+        // Detectar visibilidade da página
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                console.log('Página voltou ao foco, verificando estado...');
                 loadPrices();
                 ensureVideoPlaying();
             }
         });
 
-        // Detectar erros de rede
-        window.addEventListener('online', () => {
-            console.log('Conexão de rede restaurada');
-            loadPrices();
-            ensureVideoPlaying();
-        });
-
-        window.addEventListener('offline', () => {
-            console.log('Conexão de rede perdida');
-            updateConnectionStatus('offline');
-        });
+        // Função de debug para ajustar posições (usar no console F12)
+        window.adjustPrices = function(etanolTop, gasolinaTop) {
+            const etanol = document.querySelector('.etanol-price');
+            const gasolina = document.querySelector('.gasolina-price');
+            if (etanol) etanol.style.top = etanolTop + 'px';
+            if (gasolina) gasolina.style.top = gasolinaTop + 'px';
+            console.log(`Ajustado - Etanol: ${etanolTop}px, Gasolina: ${gasolinaTop}px`);
+            console.log('Para manter essas posições, atualize o CSS com estes valores.');
+        };
 
         // Inicialização
         function init() {
-            console.log('Iniciando PDVIEW Player...');
+            console.log('PDVIEW LED 192x384 - Iniciando...');
+            console.log('Para ajustar posições use: adjustPrices(145, 245)');
 
-            // Carregar preços iniciais
+            setupVideo();
             loadPrices();
 
-            // Configurar atualizações periódicas
+            // Intervalos periódicos
             setInterval(loadPrices, CONFIG.priceUpdateInterval);
-
-            // Configurar heartbeat
             setInterval(heartbeat, CONFIG.heartbeatInterval);
 
-            // Garantir que o vídeo está tocando
-            ensureVideoPlaying();
-
-            // Forçar play inicial após 1 segundo
-            setTimeout(() => {
-                video.play().catch(() => {
-                    console.log('Autoplay bloqueado, usuário precisa interagir');
-                });
-            }, 1000);
+            // Garantir vídeo tocando
+            setInterval(ensureVideoPlaying, 5000);
         }
 
-        // Iniciar quando a página carregar
+        // Iniciar
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
             init();
         }
-
-        // Log de informações úteis
-        console.log('PDVIEW Player - Versão Estável para TB40');
-        console.log('Configurações:', CONFIG);
     </script>
 </body>
-
 </html>

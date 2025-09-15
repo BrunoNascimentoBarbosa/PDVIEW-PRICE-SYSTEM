@@ -30,7 +30,7 @@ def get_local_ip():
 
 def print_header():
     print("=" * 60)
-    print("          PDVIEW OFFLINE - GERENCIADO DE PREÇOS OFFLINE")
+    print("     PDVIEW OFFLINE - PAINEL LED 192x384")
     print("=" * 60)
 
 
@@ -284,8 +284,10 @@ def run_servers():
         print_header()
         print("\n✅ SERVIDORES RODANDO!\n")
         print("-" * 60)
-        print("\n📱 ACESSO LOCAL:")
-        print("   http://localhost:8000")
+        print("\n📺 PAINEL LED 192x384:")
+        print("   http://localhost:8000/play.html")
+        print(f"   http://{local_ip}:8000/play.html")
+
         print(f"\n📱 ACESSO NA REDE (celular/tablet):")
         print(f"   http://{local_ip}:8000")
 
@@ -381,6 +383,7 @@ def main_menu():
             print("  📡 Status: SERVIDORES RODANDO")
             print("-" * 60)
 
+        print("\n📺 SISTEMA PARA PAINEL LED 192x384\n")
         print("   1)  Instalação PDVIEW OFFLINE")
         print("   2)  RODAR PDVIEW OFFLINE")
         print("   3)  PARAR PDVIEW OFFLINE")
