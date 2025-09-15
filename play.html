@@ -277,11 +277,14 @@
                 reloadTimer = null;
             }
 
-            // Recarregar vídeo para garantir stream atualizado
-            reloadVideo();
+            // FORÇA RELOAD COMPLETO DA PÁGINA QUANDO SERVIDOR RECONECTA
+            console.log('Servidor reconectado - recarregando página completamente...');
 
+            // Aguarda 1 segundo e força reload da página inteira
             setTimeout(() => {
-                updateConnectionStatus('online');
+                // Adiciona parâmetro para evitar cache
+                const newUrl = window.location.href.split('?')[0] + '?t=' + Date.now();
+                window.location.href = newUrl;
             }, 1000);
         }
 
@@ -296,70 +299,101 @@
             }
         }
 
-        // Recarregar o vídeo
+        // Recarregar o vídeo - VERSÃO MAIS AGRESSIVA
         function reloadVideo() {
-            console.log('Recarregando vídeo...');
+            console.log('Recarregando vídeo (método agressivo)...');
 
-            // Salvar posição atual (opcional)
-            const currentTime = video.currentTime;
+            // Método 1: Remover e recriar o elemento de vídeo completamente
+            const container = video.parentNode;
+            const videoHTML = video.outerHTML;
 
-            // Forçar reload do vídeo
-            const videoSrc = video.querySelector('source').src;
+            // Remove o vídeo atual
+            video.remove();
 
-            // Adicionar timestamp para evitar cache
-            const newSrc = videoSrc.split('?')[0] + '?t=' + Date.now();
+            // Cria novo elemento de vídeo
+            const newVideoHTML = videoHTML.replace(
+                'src="Videos/video-base-580x1080-sem-valor.mp4"',
+                `src="Videos/video-base-580x1080-sem-valor.mp4?t=${Date.now()}"`
+            );
 
-            video.querySelector('source').src = newSrc;
-            video.load();
+            container.insertAdjacentHTML('beforeend', newVideoHTML);
 
-            // Tentar reproduzir automaticamente
-            video.play().catch(e => {
-                console.log('Erro ao reproduzir após reload:', e);
-                // Tentar novamente
-                if (retryCount < CONFIG.maxRetries) {
-                    retryCount++;
-                    setTimeout(reloadVideo, CONFIG.videoRetryInterval);
-                } else {
-                    // Após várias tentativas, recarregar a página
-                    console.log('Muitas falhas no vídeo, recarregando página');
-                    window.location.reload(true);
-                }
-            });
+            // Atualiza referência global
+            window.video = document.getElementById('mainVideo');
+            const newVideo = window.video;
 
-            // Reset contador se sucesso
-            video.onplaying = () => {
-                retryCount = 0;
-                console.log('Vídeo reproduzindo com sucesso');
-            };
+            // Força reprodução
+            setTimeout(() => {
+                newVideo.play().catch(e => {
+                    console.log('Tentando método alternativo...');
+
+                    // Método 2: Se falhar, força reload da página inteira
+                    if (retryCount < CONFIG.maxRetries) {
+                        retryCount++;
+                        console.log(`Tentativa ${retryCount} de ${CONFIG.maxRetries}`);
+
+                        // Tenta criar um novo vídeo inline
+                        const tempSrc = `Videos/video-base-580x1080-sem-valor.mp4?cache=${Math.random()}&t=${Date.now()}`;
+                        newVideo.src = tempSrc;
+                        newVideo.load();
+
+                        setTimeout(() => {
+                            newVideo.play().catch(() => {
+                                setTimeout(reloadVideo, CONFIG.videoRetryInterval);
+                            });
+                        }, 500);
+                    } else {
+                        console.log('Forçando reload completo da página...');
+                        // Força reload sem cache
+                        window.location.href = window.location.href + '?reload=' + Date.now();
+                    }
+                });
+
+                // Re-adiciona event listeners
+                newVideo.addEventListener('error', handleVideoError);
+                newVideo.addEventListener('stalled', handleVideoStalled);
+                newVideo.addEventListener('waiting', handleVideoWaiting);
+                newVideo.addEventListener('playing', handleVideoPlaying);
+
+                newVideo.onplaying = () => {
+                    retryCount = 0;
+                    console.log('Vídeo reproduzindo com sucesso após reload');
+                    updateConnectionStatus('online');
+                };
+            }, 100);
         }
 
-        // Event listeners para o vídeo
-        video.addEventListener('error', (e) => {
+        // Funções separadas para os event listeners
+        function handleVideoError(e) {
             console.error('Erro no vídeo:', e);
             updateConnectionStatus('reconnecting');
-
-            // Tentar recarregar o vídeo
             if (!videoRetryTimer) {
                 videoRetryTimer = setTimeout(() => {
                     reloadVideo();
                     videoRetryTimer = null;
                 }, CONFIG.videoRetryInterval);
             }
-        });
+        }
 
-        video.addEventListener('stalled', () => {
+        function handleVideoStalled() {
             console.warn('Vídeo travado, tentando recuperar...');
             ensureVideoPlaying();
-        });
+        }
 
-        video.addEventListener('waiting', () => {
+        function handleVideoWaiting() {
             console.log('Vídeo em buffer...');
             updateConnectionStatus('reconnecting');
-        });
+        }
 
-        video.addEventListener('playing', () => {
+        function handleVideoPlaying() {
             updateConnectionStatus('online');
-        });
+        }
+
+        // Event listeners para o vídeo
+        video.addEventListener('error', handleVideoError);
+        video.addEventListener('stalled', handleVideoStalled);
+        video.addEventListener('waiting', handleVideoWaiting);
+        video.addEventListener('playing', handleVideoPlaying);
 
         // Heartbeat - verificação periódica do servidor
         async function heartbeat() {
